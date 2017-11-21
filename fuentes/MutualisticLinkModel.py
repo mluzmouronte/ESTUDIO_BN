@@ -342,8 +342,8 @@ def CompareDistributions(web_name,num_trials,fl):
     sub = ax[0]
     ka, pka, kp, pkp = CumulativeDistribution(R,0)
     xka, yka, eka, xkp, ykp, ekp, me = NsimDist(Nl, w,Na,Np,fl,num_trials,0)    
-    sub.loglog(ka,pka,'ro',kp,pkp,'gs', size=2) 
-    sub.loglog(xka,yka,'r',xkp,ykp,'g', size=2) 
+    sub.loglog(ka,pka,'r*',kp,pkp,'gx') 
+    sub.loglog(xka,yka,'r*',xkp,ykp,'gx') 
     eka[eka>=yka] = yka[eka>=yka]*.999 # prevents errorbars <= 0
     ekp[ekp>=ykp] = ykp[ekp>=ykp]*.999 
     sub.fill_between(xka,yka+eka,yka-eka,alpha=0.3,facecolor='gray',linewidth=0)
@@ -373,7 +373,7 @@ def ExecuteExperiment(i):
 
     print("Path:"+nameFile)
     ReadWeb(nameFile)
-    CompareDistributions(nameFile,1,i*0)
+    CompareDistributions(nameFile,30,i*0)
     CompareMatrix(nameFile,i*0)
 
 for nameFile in glob.glob(os.getcwd() + "\\"+"..\datos\RedAdy*.txt", recursive=False): 
