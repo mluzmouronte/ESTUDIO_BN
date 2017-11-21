@@ -2,7 +2,7 @@
 """
 Created on Sun Oct 28 12:27:54 2017
 
-@author: maryluz.mouronte
+@author: maryluz.mouronte (email: maryluz.mouronte@ufv.es)
 """
 
 """

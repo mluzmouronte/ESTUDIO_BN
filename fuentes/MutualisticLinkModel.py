@@ -6,10 +6,8 @@ The script has been written in Python 2.7, it requires numpy, scipy,
 pylab and matplotlib modulles to be installed.
 
 Please cite:
-    'Link aggregation process for modelling weighted mutualistic networks'
-    Manuel Jiménez-Martín, Juan Carlos Losada, Juan Manuel Pastor and Javier
-    Galeano.
-    doi:    . (2014)
+    
+    doi:    . (XXXX)
     
 ------------
 Description
@@ -33,7 +31,7 @@ available on the web using the excel exporting tool, columns have to be separate
 with tabs (\t) and rows with line jumps (\n).
 
 """
-__author__ = 'Manuel Jiménez-Martín (manuel.jimenez@bec.uned.es)'
+__author__ = 'Manuel Jiménez-Martín (manuel.jimenez@bec.uned.es) and Mary Luz Mouronte (maryluz.mouronte@ufv.es)'
 __version__ = '1.0'
 
 import numpy as np
@@ -83,52 +81,16 @@ def ReadWeb(web_file):
 #_____________________________________________________________________________    
 # MODEL NETWORK BUILDER
 
-def SimNet(w,Na,Np,fl):
-
-    '''
-    Simulates a mutualistic network with w total weight, Na animal species, 
-    Np plant species and fl percentage of forbidden links
-    Returns the weighted interaction matrix
-    '''
-    edge_list=[(0,0),(0,1),(1,0)]
-    Amax = 4
-    Pmax = 4
-    # generate random forbidden links matrix a priori
-    FL = np.zeros((Na,Np),dtype=bool)   
-    while sum(FL)/float(Na*Np) < fl:      
-        a = random.choice(range(Na))     
-        p = random.choice(range(Np))      
-        if (a,p) not in edge_list and not FL[a,p]:
-            FL[a,p] = 1
-    # link aggregation process generates a link list          
-    while len(edge_list) < w:    
-        if random.random() < ( (Na**2-Na)/(2.*w) )/(1.*Amax) and Amax < Na:
-            A = Amax
-            Amax += 1
-        else:
-            A = random.choice(edge_list)[0]
-        if random.random() < ( (Np**2-Np)/(2.*w) )/(1.*Pmax) and Pmax < Np:
-            P = Pmax
-            Pmax += 1
-        else:
-            P = random.choice(edge_list)[1]
-        if not FL[A,P]:  
-            edge_list.append((A,P))
-    # translate the link list to an interaction matrix
-    W = np.zeros((Na,Np),dtype=int)
-    for (A,P) in edge_list:
-        W[A,P] += 1 
-    return W
 
 def SimNet2(Nl,w,Na,Np,fl):
 
     '''
-    Simulates a mutualistic network with w total weight, Na animal species, 
-    Np plant species and fl percentage of forbidden links
+    Simulates a mutualistic network with w total weight, Na importers, 
+    Np exporters and fl percentage of forbidden links
     Returns the weighted interaction matrix
     '''
     edge_list=[(0,0),(0,1),(1,0)]
-    edge_list_weight= [(0,0,0),(0,1,0),(1,0,0)]
+    edge_list_weight= [(0,0,0.01),(0,1,0.01),(1,0,0.01)]
     Amax = 4
     Pmax = 4
     # generate random forbidden links matrix a priori
@@ -138,9 +100,11 @@ def SimNet2(Nl,w,Na,Np,fl):
         p = random.choice(range(Np))      
         if (a,p) not in edge_list and not FL[a,p]:
             FL[a,p] = 1
+
     # link aggregation process generates a link list          
-   
-    while ((sum(elem[2] for elem in edge_list_weight) < w) or (len(edge_list) < Nl)): 
+    
+    W = np.zeros((Na,Np),dtype=float)
+    while ((sum(elem[2] for elem in edge_list_weight) < w) or (np.count_nonzero(W)<Nl)):
         if random.random() < ( (Na**2-Na)/(2.*w) )/(1.*Amax) and Amax < Na:
             A = Amax
             Amax += 1
@@ -153,17 +117,17 @@ def SimNet2(Nl,w,Na,Np,fl):
             P = random.choice(edge_list)[1]
         if not FL[A,P]:  
             if (sum(elem[2] for elem in edge_list_weight) < w):
-            	w_link= random.randint(0,100)#Peso aleatorio entre 0 y 100
+            	w_link= random.uniform(0.1,100)#Peso aleatorio entre 0 y 100
             else:
-                #w_link= random.randint(0,1)
-                w_link= random.uniform(0.1,0.8)
-            #w_link=w_link/100
+                w_link= random.uniform(0.01,0.1)
+           
             edge_list.append((A,P))
             edge_list_weight.append((A,P,w_link))
-    # translate the link list to an interaction matrix
-    W = np.zeros((Na,Np),dtype=int)
-    for (A,P,w_link) in edge_list_weight:
-        W[A,P] = W[A,P]+w_link 
+            W[A,P] = W[A,P]+w_link
+            print("Links in simulated network:")
+            print(np.count_nonzero(W))
+            
+   
     return W
 
 
@@ -308,8 +272,12 @@ def CompareMatrix(web_name,fl):
     R = ReadWeb(web_name)   
     (Na,Np) = shape(R)
     w = sum(R)
-    Nl=np.count_nonzero(R) #Mary Luz 14/11/2017
+    Nl=np.count_nonzero(R) 
+    print("Enlaces R")
+    print(Nl)
     W = SimNet2(Nl, w,Na,Np,fl)
+    print("Enlaces W")
+    print(np.count_nonzero(W))
     R = array(Pack(R))
     W = array(Pack(W))
     fig, ax = subplots(1,2,sharex=False,sharey=False)
@@ -328,7 +296,6 @@ def CompareMatrix(web_name,fl):
     m2.axes.set_xlabel('E-exporter')
     m2.axes.set_title('Simulated int. matrix')
     
-     #Mary Luz 16/10/2017
 
     fileFig = web_name.replace(".txt","_"+str(fl)+"FigCMm1.png")
     myFig = m1.get_figure()  
@@ -352,7 +319,7 @@ def CompareDistributions(web_name,num_trials,fl):
     R = ReadWeb(web_name)   
     (Na,Np) = shape(R)
     w = sum(R)
-    Nl=np.count_nonzero(R) #Mary Luz 14/11/2017
+    Nl=np.count_nonzero(R) 
     W = SimNet2(Nl,w,Na,Np,fl)
     R = array(Pack(R))
     W = array(Pack(W))
@@ -375,8 +342,8 @@ def CompareDistributions(web_name,num_trials,fl):
     sub = ax[0]
     ka, pka, kp, pkp = CumulativeDistribution(R,0)
     xka, yka, eka, xkp, ykp, ekp, me = NsimDist(Nl, w,Na,Np,fl,num_trials,0)    
-    sub.loglog(ka,pka,'ro',kp,pkp,'gs') 
-    sub.loglog(xka,yka,'r',xkp,ykp,'g') 
+    sub.loglog(ka,pka,'ro',kp,pkp,'gs', size=2) 
+    sub.loglog(xka,yka,'r',xkp,ykp,'g', size=2) 
     eka[eka>=yka] = yka[eka>=yka]*.999 # prevents errorbars <= 0
     ekp[ekp>=ykp] = ykp[ekp>=ykp]*.999 
     sub.fill_between(xka,yka+eka,yka-eka,alpha=0.3,facecolor='gray',linewidth=0)
@@ -389,11 +356,7 @@ def CompareDistributions(web_name,num_trials,fl):
     t = '$E_{emp}= '+str(sum(R>0))+'$\n'+'$E_{sim}= '+str(round(me))+'$'     
     sub.text(1.04,min(min(pka),min(pkp)),t)
     fig.tight_layout()
-    #return xsa, ysa, esa, xsp, ysp, esp     #simulated strength distributions           
-    #return sxa, sa, sp, psp                 #empirical strength distributions           
-    #return xka, yka, eka, xkp, ykp, ekp     #simulated degree distributions           
-    #return kxa, ka, kp, pkp                 #empirical degree distributions
-    #Mary Luz 16/10/2017
+    
 
     fileFig = web_name.replace(".txt","_"+str(fl)+"FigCD.png")
     myFig = sub.get_figure()  
@@ -404,12 +367,16 @@ def CompareDistributions(web_name,num_trials,fl):
 #_____________________________________________________________________________    
 
 def ExecuteExperiment(i):
+#Executes experiment i
+
     global nameFile
 
     print("Path:"+nameFile)
     ReadWeb(nameFile)
-    CompareDistributions(nameFile,10,i*0.1)
-    CompareMatrix(nameFile,i*0.1)
+    CompareDistributions(nameFile,1,i*0)
+    CompareMatrix(nameFile,i*0)
 
 for nameFile in glob.glob(os.getcwd() + "\\"+"..\datos\RedAdy*.txt", recursive=False): 
+    print("nameFile")
+    print(nameFile)
     [ExecuteExperiment(k) for k in range(1, 2)]
